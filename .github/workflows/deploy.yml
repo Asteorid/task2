@@ -1,0 +1,36 @@
+name: Deploy to FTP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Step 2: Update VERSION.txt
+    - name: Update VERSION.txt
+      run: |
+        echo "Branch: $(git rev-parse --abbrev-ref HEAD)" > VERSION.txt
+        echo "Commit: $(git log -1 --pretty=format:'%H')" >> VERSION.txt
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add VERSION.txt
+        git commit -m "Update VERSION.txt with latest commit info"
+
+    # Step 3: Deploy via FTP
+    - name: Deploy files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /path/to/remote/server
+        exclude: ".git*/**"
